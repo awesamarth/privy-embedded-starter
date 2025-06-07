@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { megaethTestnet } from "viem/chains";
+import Providers from "@/context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,23 +39,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PrivyProvider
-            appId={process.env.NEXT_PUBLIC_PROJECT_ID!}
-
-            config={{
-              // Create embedded wallets for users who don't have a wallet
-              defaultChain:megaethTestnet,
-              supportedChains:[megaethTestnet],
-
-              embeddedWallets: {
-                createOnLogin: 'all-users',
-              },
-            }}
-          >
+          <Providers>
             <Navbar />
             {children}
             <Footer />
-          </PrivyProvider>
+
+          </Providers>
         </ThemeProvider>
       </body>
     </html>
