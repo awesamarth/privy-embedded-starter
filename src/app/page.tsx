@@ -1,22 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSendTransaction, usePrivy, useWallets, getEmbeddedConnectedWallet } from '@privy-io/react-auth'
-import { useWriteContract, useChainId, useBalance } from 'wagmi'
-import { parseEther } from 'viem'
+import { useBalance, useAccount } from 'wagmi'
 import { megaethTestnet, riseTestnet } from 'viem/chains'
 import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
+import { COMMON_SETTER_ABI, MEGA_SETTER_ADDRESS, RISE_SETTER_ADDRESS } from '@/constants'
+import { createWalletClient,  custom, type Hex, type WalletClient } from 'viem'
 
-const PLACEHOLDER_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'
-const PLACEHOLDER_ABI = [
-  {
-    name: 'setValue',
-    type: 'function',
-    stateMutability: 'nonpayable',
-    inputs: [{ name: 'value', type: 'uint256' }],
-    outputs: []
-  }
-]
+
 
 // Faucet URLs for each chain
 const FAUCET_URLS = {
@@ -24,10 +16,14 @@ const FAUCET_URLS = {
   [riseTestnet.id]: 'https://faucet.testnet.riselabs.xyz/'
 }
 
+// Addresses of the contracts I've deployed
+const CONTRACT_ADDRESSES = {
+  [megaethTestnet.id]: MEGA_SETTER_ADDRESS,
+  [riseTestnet.id]: RISE_SETTER_ADDRESS
+}
+
 export default function Home() {
   const { sendTransaction } = useSendTransaction()
-  const { writeContractAsync } = useWriteContract()
-  const chainId = useChainId()
   const { login, logout, authenticated } = usePrivy()
   const { wallets } = useWallets()
   const embeddedWallet = getEmbeddedConnectedWallet(wallets)
@@ -37,12 +33,37 @@ export default function Home() {
   const [isSendingTx, setIsSendingTx] = useState(false)
   const [isWritingContract, setIsWritingContract] = useState(false)
   const [copied, setCopied] = useState(false)
-
+  const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
+  const chainId = embeddedWallet?.chainId ? parseInt(embeddedWallet.chainId.split(':')[1]) : null
+  const { address: activeAddress } = useAccount()
 
   const { data: balance, refetch: refetchBalance } = useBalance({
     address: embeddedWallet?.address as `0x${string}`,
-    chainId
+    chainId: chainId!
   })
+
+  useEffect(() => {
+    const createClient = async () => {
+      if (embeddedWallet && chainId) {
+        try {
+          const provider = await embeddedWallet.getEthereumProvider()
+          const client = createWalletClient({
+            account: embeddedWallet.address as Hex,
+            chain: chainId === megaethTestnet.id ? megaethTestnet : riseTestnet,
+            transport: custom(provider!),
+          })
+          setWalletClient(client)
+        } catch (error) {
+          console.error('Failed to create wallet client:', error)
+          setWalletClient(null)
+        }
+      } else {
+        setWalletClient(null)
+      }
+    }
+
+    createClient()
+  }, [embeddedWallet?.address, chainId])
 
   const handleSendTransaction = async () => {
     try {
@@ -60,13 +81,21 @@ export default function Home() {
   }
 
   const handleWriteContract = async () => {
+    if (!walletClient) {
+      console.error('Wallet client not ready')
+      return
+    }
+
     try {
       setIsWritingContract(true)
-      const hash = await writeContractAsync({
-        address: PLACEHOLDER_CONTRACT_ADDRESS,
-        abi: PLACEHOLDER_ABI,
+
+      const hash = await walletClient.writeContract({
+        account: embeddedWallet!.address as `0x${string}`,
+        address: CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] as `0x${string}`,
+        abi: COMMON_SETTER_ABI,
         functionName: 'setValue',
-        args: [BigInt(42)]
+        args: [2],
+        chain: chainId === megaethTestnet.id ? megaethTestnet : riseTestnet
       })
       setLastContractHash(hash)
     } catch (error) {
@@ -78,9 +107,13 @@ export default function Home() {
 
   const handleSwitchChain = async (targetChainId: number) => {
     try {
+      console.log("switching chain to", targetChainId)
+      console.log("embedded wallet is here: ", embeddedWallet)
       await embeddedWallet?.switchChain(targetChainId)
       setLastTxHash(null)
       setLastContractHash(null)
+      console.log("Switch done")
+
     } catch (error) {
       console.error('Chain switch failed:', error)
     }
@@ -116,7 +149,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold mb-4">Privy Embedded Wallet Demo</h1>
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-gray-600 dark:text-gray-400">Connected Wallet:</span>
-              <span className="text-gray-600 dark:text-gray-400">{embeddedWallet?.address}</span>
+            <span className="text-gray-600 dark:text-gray-400">{embeddedWallet?.address}</span>
             <button
               onClick={copyAddress}
               className="p-1 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
@@ -146,7 +179,7 @@ export default function Home() {
               <div className="flex gap-3">
                 <button
                   onClick={() => handleSwitchChain(megaethTestnet.id)}
-                  className={`px-4 py-2 rounded hover:cursor-pointer font-medium ${chainId === megaethTestnet.id
+                  className={`px-4 py-2 rounded hover:cursor-pointer font-medium ${(embeddedWallet?.chainId ? parseInt(embeddedWallet.chainId.split(':')[1]) : null) === megaethTestnet.id
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500'
                     }`}
@@ -155,7 +188,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => handleSwitchChain(riseTestnet.id)}
-                  className={`px-4 py-2 rounded hover:cursor-pointer font-medium ${chainId === riseTestnet.id
+                  className={`px-4 py-2 rounded hover:cursor-pointer font-medium ${(embeddedWallet?.chainId ? parseInt(embeddedWallet.chainId.split(':')[1]) : null) === riseTestnet.id
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-200 border border-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500'
                     }`}
@@ -198,7 +231,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 border rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Send Transaction</h2>
-            <p className="text-gray-600 mb-4 text-sm">
+            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
               Sends 0 ETH to your own address (still requires gas for testing transaction functionality)
             </p>
             <button
@@ -231,16 +264,16 @@ export default function Home() {
 
           <div className="p-6 border rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Write to Contract</h2>
-            <p className="text-gray-600 mb-2 text-sm">
-              Calls setValue(42) on contract to test smart contract interaction
+            <p className="text-gray-600 dark:text-gray-400 mb-2 text-sm">
+              Calls setValue(2) on contract to test smart contract interaction
             </p>
             <p className="text-gray-500 mb-4 text-xs font-mono">
-              Contract: {PLACEHOLDER_CONTRACT_ADDRESS}
+              Contract: {CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES]}
             </p>
             <button
               onClick={handleWriteContract}
-              disabled={!hasBalance || isWritingContract}
-              className={`w-full px-4 py-3 rounded hover:cursor-pointer font-medium ${hasBalance && !isWritingContract
+              disabled={!hasBalance || isWritingContract || !walletClient}
+              className={`w-full px-4 py-3 rounded hover:cursor-pointer font-medium ${hasBalance && !isWritingContract && walletClient
                 ? 'bg-purple-600 text-white hover:bg-purple-700'
                 : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 }`}
