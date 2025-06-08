@@ -4,6 +4,7 @@ import { useSendTransaction, usePrivy, useWallets, getEmbeddedConnectedWallet } 
 import { useWriteContract, useChainId, useBalance } from 'wagmi'
 import { parseEther } from 'viem'
 import { megaethTestnet, riseTestnet } from 'viem/chains'
+import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
 
 const PLACEHOLDER_CONTRACT_ADDRESS = '0x1234567890123456789012345678901234567890'
@@ -35,6 +36,8 @@ export default function Home() {
   const [lastContractHash, setLastContractHash] = useState<string | null>(null)
   const [isSendingTx, setIsSendingTx] = useState(false)
   const [isWritingContract, setIsWritingContract] = useState(false)
+  const [copied, setCopied] = useState(false)
+
 
   const { data: balance, refetch: refetchBalance } = useBalance({
     address: embeddedWallet?.address as `0x${string}`,
@@ -83,10 +86,11 @@ export default function Home() {
     }
   }
 
-  const openFaucet = () => {
-    const faucetUrl = FAUCET_URLS[chainId as keyof typeof FAUCET_URLS]
-    if (faucetUrl) {
-      window.open(faucetUrl, '_blank')
+  const copyAddress = async () => {
+    if (embeddedWallet?.address) {
+      await navigator.clipboard.writeText(embeddedWallet.address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 
@@ -110,10 +114,21 @@ export default function Home() {
       <div className="max-w-4xl mx-auto space-y-6 pt-16">
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-4">Privy Embedded Wallet Demo</h1>
-          <p className="text-gray-600 mb-4">Connected: {embeddedWallet?.address}</p>
-          <p className="text-gray-600 mb-6">
-            Current Chain: {chainId === megaethTestnet.id ? 'MegaETH Testnet' : 'RISE Testnet'}
-          </p>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <span className="text-gray-600 dark:text-gray-400">Connected Wallet:</span>
+              <span className="text-gray-600 dark:text-gray-400">{embeddedWallet?.address}</span>
+            <button
+              onClick={copyAddress}
+              className="p-1 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              title="Copy address"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              )}
+            </button>
+          </div>
 
           <button
             onClick={logout}
