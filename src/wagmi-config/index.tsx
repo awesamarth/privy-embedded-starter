@@ -1,6 +1,5 @@
 import { foundry, mainnet, megaethTestnet, sepolia, somniaTestnet, abstractTestnet, riseTestnet } from 'viem/chains';
-import { http, webSocket } from 'wagmi';
-import { defineChain } from 'viem'
+import { http } from 'wagmi';
 
 
 import { createConfig } from '@privy-io/wagmi';

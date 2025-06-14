@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useSendTransaction, usePrivy, useWallets, getEmbeddedConnectedWallet } from '@privy-io/react-auth'
-import { useBalance, useAccount } from 'wagmi'
+import { useBalance } from 'wagmi'
 import { megaethTestnet, riseTestnet } from 'viem/chains'
 import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
@@ -35,7 +35,6 @@ export default function Home() {
   const [copied, setCopied] = useState(false)
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null)
   const chainId = embeddedWallet?.chainId ? parseInt(embeddedWallet.chainId.split(':')[1]) : null
-  const { address: activeAddress } = useAccount()
 
   const { data: balance, refetch: refetchBalance } = useBalance({
     address: embeddedWallet?.address as `0x${string}`,
