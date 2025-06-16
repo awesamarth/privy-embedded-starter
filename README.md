@@ -19,6 +19,7 @@ A production-ready Next.js starter template for building dApps with [Privy](http
 
 - Node.js 18+ 
 - A [Privy account](https://dashboard.privy.io) and App ID
+- In your Privy dashboard, go to your app, then click on **Authentication** (under User Management) → **Advanced** → Tick **"Disable confirmation modals"**
 
 ### Installation
 
