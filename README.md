@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Privy Embedded Wallet Starter
 
-## Getting Started
+A production-ready Next.js starter template for building dApps with [Privy](https://privy.io) embedded wallets, featuring multi-chain support and modern Web3 tooling.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Privy Authentication** - Seamless login with embedded wallets
+- **Multi-chain Support** - Pre-configured for MegaETH and RISE testnets
+- **Modern Stack** - Next.js 15, TypeScript, Tailwind CSS
+- **Wagmi and Viem** - Wagmi + Viem pre-configured
+- **Sleek UI** - Dark/light theme with responsive design
+- **Chain Switching** - Easy network switching functionality
+- **Transaction Examples** - Send transactions and contract interactions
+- **Ready to Deploy** - Optimized for production deployment
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- A [Privy account](https://dashboard.privy.io) and App ID
+
+### Installation
+
+1. **Clone this repository**
+   ```bash
+   git clone https://github.com/awesamarth/privy-embedded-starter.git
+   cd privy-embedded-starter
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   pnpm install
+   # or
+   yarn install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Add your Privy App ID to `.env.local`:
+   ```
+   NEXT_PUBLIC_PROJECT_ID=your_privy_app_id_here
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open [http://localhost:3000](http://localhost:3000)** in your browser
+
+## Configuration
+
+### Supported Chains
+
+By default, this starter supports:
+- **MegaETH Testnet** - High-performance Ethereum L2
+- **RISE Testnet** - Next-generation blockchain network
+
+### Adding New Chains
+
+1. **Update `src/wagmi-config/index.tsx`**:
+   ```typescript
+   import { yourNewChain } from 'viem/chains'
+   
+   export const wagmiConfig = createConfig({
+     chains: [megaethTestnet, riseTestnet, yourNewChain],
+     transports: {
+       [yourNewChain.id]: http(),
+     },
+   })
+   ```
+
+2. **Update the Privy config in `src/context/index.tsx`**:
+   ```typescript
+   supportedChains: [megaethTestnet, riseTestnet, yourNewChain]
+   ```
+
+### Smart Contracts
+
+The starter includes example contract interactions. Update contract addresses in `src/constants/index.ts` for your own contracts.
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+├── components/          # Reusable UI components
+├── constants/           # Contract addresses and ABIs
+├── context/            # Privy and provider setup
+├── lib/                # Utility functions
+└── wagmi-config/       # Wagmi configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What's Included
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Authentication Flow** - Login/logout with Privy
+- **Wallet Management** - Embedded wallet creation and connection
+- **Balance Display** - Real-time balance updates
+- **Chain Switching** - Switch between supported networks
+- **Transaction Examples**:
+  - Send ETH transactions
+  - Smart contract interactions
+  - Transaction status tracking
+- **Responsive Design** - Mobile-friendly interface
+- **Theme Support** - Dark/light mode toggle
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Customization
+
+### Styling
+- Built with **Tailwind CSS** - modify `tailwind.config.js`
+- Theme system with `next-themes`
+- Component library setup ready for shadcn/ui
+
+### Web3 Configuration
+- **Wagmi** configuration in `src/wagmi-config/`
+- **Viem** for low-level Ethereum interactions
+- Easy to extend with additional chains
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Privy Documentation](https://docs.privy.io/)
+- [Wagmi Documentation](https://wagmi.sh/)
+- [Viem Documentation](https://viem.sh/)
+- [Next.js Documentation](https://nextjs.org/docs)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Vercel (Recommended)
 
-## Deploy on Vercel
+1. Push your code to GitHub
+2. Connect your repo to [Vercel](https://vercel.com)
+3. Add your environment variables in Vercel dashboard
+4. Deploy!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Other Platforms
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This starter works on any platform that supports Next.js:
+- Netlify
+- Railway
+- Render
+- AWS Amplify
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
